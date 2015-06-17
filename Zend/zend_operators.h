@@ -432,132 +432,22 @@ ZEND_API void zend_update_current_locale(void);
 
 static zend_always_inline void fast_long_increment_function(zval *op1)
 {
-#if defined(__GNUC__) && defined(__i386__)
-	__asm__(
-		"incl (%0)\n\t"
-		"jno  0f\n\t"
-		"movl $0x0, (%0)\n\t"
-		"movl $0x41e00000, 0x4(%0)\n\t"
-		"movl %1, %c2(%0)\n"
-		"0:"
-		:
-		: "r"(&op1->value),
-		  "n"(IS_DOUBLE),
-		  "n"(ZVAL_OFFSETOF_TYPE)
-		: "cc");
-#elif defined(__GNUC__) && defined(__x86_64__)
-	__asm__(
-		"incq (%0)\n\t"
-		"jno  0f\n\t"
-		"movl $0x0, (%0)\n\t"
-		"movl $0x43e00000, 0x4(%0)\n\t"
-		"movl %1, %c2(%0)\n"
-		"0:"
-		:
-		: "r"(&op1->value),
-		  "n"(IS_DOUBLE),
-		  "n"(ZVAL_OFFSETOF_TYPE)
-		: "cc");
-#elif defined(__GNUC__) && defined(__powerpc64__)
-	 __asm__(
-		"ld 14, 0(%0)\n\t"
-		"li 15, 1\n\t"
-		"li 16, 0\n\t"
-		"mtxer 16\n\t"
-		"addo. 14, 14, 15\n\t"
-		"std 14, 0(%0)\n\t"
-		"bns+  0f\n\t"
-		"xor 14, 14, 14\n\t"
-		"lis 15, 0x43e00000@h\n\t"
-		"ori 15, 15, 0x43e00000@l\n\t"
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-		"stw 14, 0(%0)\n\t"
-		"stw 15, 0x4(%0)\n\t"
-#else
-		"stw 14, 0x4(%0)\n\t"
-		"stw 15, 0(%0)\n\t"
-#endif
-		"li 14, %1\n\t"
-		"stw 14, %c2(%0)\n"
-		"0:"
-		:
-		: "r"(&op1->value),
-		  "n"(IS_DOUBLE),
-		  "n"(ZVAL_OFFSETOF_TYPE)
-		: "r14", "r15", "r16", "cc");
-#else
 	if (UNEXPECTED(Z_LVAL_P(op1) == ZEND_LONG_MAX)) {
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MAX + 1.0);
 	} else {
 		Z_LVAL_P(op1)++;
 	}
-#endif
 }
 
 static zend_always_inline void fast_long_decrement_function(zval *op1)
 {
-#if defined(__GNUC__) && defined(__i386__)
-	__asm__(
-		"decl (%0)\n\t"
-		"jno  0f\n\t"
-		"movl $0x00200000, (%0)\n\t"
-		"movl $0xc1e00000, 0x4(%0)\n\t"
-		"movl %1,%c2(%0)\n"
-		"0:"
-		:
-		: "r"(&op1->value),
-		  "n"(IS_DOUBLE),
-		  "n"(ZVAL_OFFSETOF_TYPE)
-		: "cc");
-#elif defined(__GNUC__) && defined(__x86_64__)
-	__asm__(
-		"decq (%0)\n\t"
-		"jno  0f\n\t"
-		"movl $0x00000000, (%0)\n\t"
-		"movl $0xc3e00000, 0x4(%0)\n\t"
-		"movl %1,%c2(%0)\n"
-		"0:"
-		:
-		: "r"(&op1->value),
-		  "n"(IS_DOUBLE),
-		  "n"(ZVAL_OFFSETOF_TYPE)
-		: "cc");
-#elif defined(__GNUC__) && defined(__powerpc64__)
-	__asm__(
-		"ld 14, 0(%0)\n\t"
-		"li 15, 1\n\t"
-		"li 16, 0\n\t"
-		"mtxer 16\n\t"
-		"subo. 14, 14, 15\n\t"
-		"std 14, 0(%0)\n\t"
-		"bns+  0f\n\t"
-		"xor 14, 14, 14\n\t"
-		"lis 15, 0xc3e00000@h\n\t"
-		"ori 15, 15, 0xc3e00000@l\n\t"
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-		"stw 14, 0(%0)\n\t"
-		"stw 15, 0x4(%0)\n\t"
-#else
-		"stw 14, 0x4(%0)\n\t"
-		"stw 15, 0(%0)\n\t"
-#endif
-		"li 14, %1\n\t"
-		"stw 14, %c2(%0)\n"
-		"0:"
-		:
-		: "r"(&op1->value),
-		  "n"(IS_DOUBLE),
-		  "n"(ZVAL_OFFSETOF_TYPE)
-		: "r14", "r15", "r16", "cc");
-#else
 	if (UNEXPECTED(Z_LVAL_P(op1) == ZEND_LONG_MIN)) {
 		/* switch to double */
 		ZVAL_DOUBLE(op1, (double)ZEND_LONG_MIN - 1.0);
 	} else {
 		Z_LVAL_P(op1)--;
 	}
-#endif
 }
 
 static zend_always_inline void fast_long_add_function(zval *result, zval *op1, zval *op2)
