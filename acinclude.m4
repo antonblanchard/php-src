@@ -3049,3 +3049,21 @@ AC_DEFUN([PHP_CHECK_BUILTIN_EXPECT], [
   AC_DEFINE_UNQUOTED([PHP_HAVE_BUILTIN_EXPECT], [$have_builtin_expect], [Whether the compiler supports __builtin_expect])
 
 ])
+
+dnl PHP_CHECK_BUILTIN_ADD_OVERFLOW
+AC_DEFUN([PHP_CHECK_BUILTIN_ADD_OVERFLOW], [
+  AC_MSG_CHECKING([for __builtin_add_overflow])
+
+  AC_TRY_LINK(, [
+    int x, y, z; return __builtin_add_overflow(x, y, &z);
+  ], [
+    have_builtin_add_overflow=1
+    AC_MSG_RESULT([yes])
+  ], [
+    have_builtin_add_overflow=0
+    AC_MSG_RESULT([no])
+  ])
+
+  AC_DEFINE_UNQUOTED([PHP_HAVE_BUILTIN_ADD_OVERFLOW], [$have_builtin_add_overflow], [Whether the compiler supports __builtin_add_overflow])
+
+])

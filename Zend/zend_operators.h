@@ -452,7 +452,12 @@ static zend_always_inline void fast_long_decrement_function(zval *op1)
 
 static zend_always_inline void fast_long_add_function(zval *result, zval *op1, zval *op2)
 {
-#if defined(__GNUC__) && defined(__i386__)
+#ifdef PHP_HAVE_BUILTIN_ADD_OVERFLOW
+	if (EXPECTED(__builtin_add_overflow(Z_LVAL_P(op1), Z_LVAL_P(op2), &Z_LVAL_P(result)) == 0))
+		Z_TYPE_INFO_P(result) = IS_LONG;
+	else
+		ZVAL_DOUBLE(result, (double) Z_LVAL_P(op1) + (double) Z_LVAL_P(op2));
+#elif defined(__GNUC__) && defined(__i386__)
 	__asm__(
 		"movl	(%1), %%eax\n\t"
 		"addl   (%2), %%eax\n\t"
@@ -568,7 +573,12 @@ static zend_always_inline int fast_add_function(zval *result, zval *op1, zval *o
 
 static zend_always_inline void fast_long_sub_function(zval *result, zval *op1, zval *op2)
 {
-#if defined(__GNUC__) && defined(__i386__)
+#ifdef PHP_HAVE_BUILTIN_ADD_OVERFLOW
+	if (EXPECTED(__builtin_sub_overflow(Z_LVAL_P(op1), Z_LVAL_P(op2), &Z_LVAL_P(result)) == 0))
+		Z_TYPE_INFO_P(result) = IS_LONG;
+	else
+		ZVAL_DOUBLE(result, (double) Z_LVAL_P(op1) - (double) Z_LVAL_P(op2));
+#elif defined(__GNUC__) && defined(__i386__)
 	__asm__(
 		"movl	(%1), %%eax\n\t"
 		"subl   (%2), %%eax\n\t"
