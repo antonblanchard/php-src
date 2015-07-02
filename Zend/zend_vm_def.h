@@ -488,21 +488,16 @@ ZEND_VM_HANDLER(18, ZEND_IS_NOT_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(19, ZEND_IS_SMALLER, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+ZEND_VM_HELPER_EX(ZEND_IS_SMALLER_helper, CONST|TMPVAR|CV, CONST|TMPVAR|CV, zval *op1, zval *op2, zend_free_op free_op1, zend_free_op free_op2)
 {
 	USE_OPLINE
-	zend_free_op free_op1, free_op2;
-	zval *op1, *op2, *result;
+	zval *result;
 
-	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
-	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 	do {
 		int result;
 
 		if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG)) {
-			if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
-				result = (Z_LVAL_P(op1) < Z_LVAL_P(op2));
-			} else if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_DOUBLE)) {
+			if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_DOUBLE)) {
 				result = ((double)Z_LVAL_P(op1) < Z_DVAL_P(op2));
 			} else {
 				break;
@@ -537,6 +532,25 @@ ZEND_VM_HANDLER(19, ZEND_IS_SMALLER, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 	FREE_OP2();
 	CHECK_EXCEPTION();
 	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(19, ZEND_IS_SMALLER, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+{
+	zend_free_op free_op1, free_op2;
+	zval *op1, *op2;
+
+	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
+
+	if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG) && EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
+		int result = (Z_LVAL_P(op1) < Z_LVAL_P(op2));
+
+		ZEND_VM_SMART_BRANCH(result, 0);
+		ZVAL_BOOL(EX_VAR(opline->result.var), result);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_IS_SMALLER_helper, type, op1, op2, free_op1, free_op2);
 }
 
 ZEND_VM_HANDLER(20, ZEND_IS_SMALLER_OR_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
