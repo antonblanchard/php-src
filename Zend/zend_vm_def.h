@@ -350,21 +350,16 @@ ZEND_VM_HANDLER(16, ZEND_IS_NOT_IDENTICAL, CONST|TMP|VAR|CV, CONST|TMP|VAR|CV)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(17, ZEND_IS_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+ZEND_VM_HELPER_EX(ZEND_IS_EQUAL_helper, CONST|TMPVAR|CV, CONST|TMPVAR|CV, zval *op1, zval *op2, zend_free_op free_op1, zend_free_op free_op2)
 {
 	USE_OPLINE
-	zend_free_op free_op1, free_op2;
-	zval *op1, *op2, *result;
+	zval *result;
 
-	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
-	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
 	do {
 		int result;
 
 		if (EXPECTED(Z_TYPE_P(op1) == IS_LONG)) {
-			if (EXPECTED(Z_TYPE_P(op2) == IS_LONG)) {
-				result = (Z_LVAL_P(op1) == Z_LVAL_P(op2));
-			} else if (EXPECTED(Z_TYPE_P(op2) == IS_DOUBLE)) {
+			if (EXPECTED(Z_TYPE_P(op2) == IS_DOUBLE)) {
 				result = ((double)Z_LVAL_P(op1) == Z_DVAL_P(op2));
 			} else {
 				break;
@@ -419,11 +414,29 @@ ZEND_VM_HANDLER(17, ZEND_IS_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(18, ZEND_IS_NOT_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+ZEND_VM_HANDLER(17, ZEND_IS_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 {
-	USE_OPLINE
 	zend_free_op free_op1, free_op2;
 	zval *op1, *op2, *result;
+
+	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
+
+	if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG) && EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
+		int result = (Z_LVAL_P(op1) == Z_LVAL_P(op2));
+
+		ZEND_VM_SMART_BRANCH(result, 0);
+		ZVAL_BOOL(EX_VAR(opline->result.var), result);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_IS_EQUAL_helper, type, op1, op2, free_op1, free_op2);
+}
+
+ZEND_VM_HELPER_EX(ZEND_IS_NOT_EQUAL_helper, CONST|TMPVAR|CV, CONST|TMPVAR|CV, zval *op1, zval *op2, zend_free_op free_op1, zend_free_op free_op2)
+{
+	USE_OPLINE
+	zval *result;
 
 	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
 	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
@@ -431,9 +444,7 @@ ZEND_VM_HANDLER(18, ZEND_IS_NOT_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 		int result;
 
 		if (EXPECTED(Z_TYPE_P(op1) == IS_LONG)) {
-			if (EXPECTED(Z_TYPE_P(op2) == IS_LONG)) {
-				result = (Z_LVAL_P(op1) != Z_LVAL_P(op2));
-			} else if (EXPECTED(Z_TYPE_P(op2) == IS_DOUBLE)) {
+			if (EXPECTED(Z_TYPE_P(op2) == IS_DOUBLE)) {
 				result = ((double)Z_LVAL_P(op1) != Z_DVAL_P(op2));
 			} else {
 				break;
@@ -488,21 +499,35 @@ ZEND_VM_HANDLER(18, ZEND_IS_NOT_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(19, ZEND_IS_SMALLER, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+ZEND_VM_HANDLER(18, ZEND_IS_NOT_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 {
-	USE_OPLINE
 	zend_free_op free_op1, free_op2;
-	zval *op1, *op2, *result;
+	zval *op1, *op2;
 
 	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
 	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
+
+	if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG) && EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
+		int result = (Z_LVAL_P(op1) != Z_LVAL_P(op2));
+
+		ZEND_VM_SMART_BRANCH(result, 0);
+		ZVAL_BOOL(EX_VAR(opline->result.var), result);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_IS_NOT_EQUAL_helper, type, op1, op2, free_op1, free_op2);
+}
+
+ZEND_VM_HELPER_EX(ZEND_IS_SMALLER_helper, CONST|TMPVAR|CV, CONST|TMPVAR|CV, zval *op1, zval *op2, zend_free_op free_op1, zend_free_op free_op2)
+{
+	USE_OPLINE
+	zval *result;
+
 	do {
 		int result;
 
 		if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG)) {
-			if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
-				result = (Z_LVAL_P(op1) < Z_LVAL_P(op2));
-			} else if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_DOUBLE)) {
+			if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_DOUBLE)) {
 				result = ((double)Z_LVAL_P(op1) < Z_DVAL_P(op2));
 			} else {
 				break;
@@ -539,11 +564,29 @@ ZEND_VM_HANDLER(19, ZEND_IS_SMALLER, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(20, ZEND_IS_SMALLER_OR_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+ZEND_VM_HANDLER(19, ZEND_IS_SMALLER, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+{
+	zend_free_op free_op1, free_op2;
+	zval *op1, *op2;
+
+	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
+
+	if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG) && EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
+		int result = (Z_LVAL_P(op1) < Z_LVAL_P(op2));
+
+		ZEND_VM_SMART_BRANCH(result, 0);
+		ZVAL_BOOL(EX_VAR(opline->result.var), result);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_IS_SMALLER_helper, type, op1, op2, free_op1, free_op2);
+}
+
+ZEND_VM_HELPER_EX(ZEND_IS_SMALLER_OR_EQUAL_helper, CONST|TMPVAR|CV, CONST|TMPVAR|CV, zval *op1, zval *op2, zend_free_op free_op1, zend_free_op free_op2)
 {
 	USE_OPLINE
-	zend_free_op free_op1, free_op2;
-	zval *op1, *op2, *result;
+	zval *result;
 
 	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
 	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
@@ -551,9 +594,7 @@ ZEND_VM_HANDLER(20, ZEND_IS_SMALLER_OR_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 		int result;
 
 		if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG)) {
-			if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
-				result = (Z_LVAL_P(op1) <= Z_LVAL_P(op2));
-			} else if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_DOUBLE)) {
+			if (EXPECTED(Z_TYPE_INFO_P(op2) == IS_DOUBLE)) {
 				result = ((double)Z_LVAL_P(op1) <= Z_DVAL_P(op2));
 			} else {
 				break;
@@ -588,6 +629,26 @@ ZEND_VM_HANDLER(20, ZEND_IS_SMALLER_OR_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
 	FREE_OP2();
 	CHECK_EXCEPTION();
 	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(20, ZEND_IS_SMALLER_OR_EQUAL, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
+{
+	USE_OPLINE
+	zend_free_op free_op1, free_op2;
+	zval *op1, *op2, *result;
+
+	op1 = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	op2 = GET_OP2_ZVAL_PTR_UNDEF(BP_VAR_R);
+
+	if (EXPECTED(Z_TYPE_INFO_P(op1) == IS_LONG) && EXPECTED(Z_TYPE_INFO_P(op2) == IS_LONG)) {
+		int result = (Z_LVAL_P(op1) <= Z_LVAL_P(op2));
+
+		ZEND_VM_SMART_BRANCH(result, 0);
+		ZVAL_BOOL(EX_VAR(opline->result.var), result);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_IS_SMALLER_OR_EQUAL_helper, type, op1, op2, free_op1, free_op2);
 }
 
 ZEND_VM_HANDLER(170, ZEND_SPACESHIP, CONST|TMPVAR|CV, CONST|TMPVAR|CV)
@@ -1266,26 +1327,14 @@ ZEND_VM_HANDLER(135, ZEND_POST_DEC_OBJ, VAR|UNUSED|CV, CONST|TMPVAR|CV)
 	ZEND_VM_DISPATCH_TO_HELPER_EX(zend_post_incdec_property_helper, inc, 0);
 }
 
-ZEND_VM_HANDLER(34, ZEND_PRE_INC, VAR|CV, ANY)
+ZEND_VM_HELPER_EX(ZEND_PRE_INC_helper, VAR|CV, ANY, zval *var_ptr, zend_free_op free_op1)
 {
 	USE_OPLINE
-	zend_free_op free_op1;
-	zval *var_ptr;
-
-	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 
 	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == NULL)) {
 		SAVE_OPLINE();
 		zend_error(E_EXCEPTION | E_ERROR, "Cannot increment/decrement overloaded objects nor string offsets");
 		HANDLE_EXCEPTION();
-	}
-
-	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
-		fast_long_increment_function(var_ptr);
-		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
-			ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
-		}
-		ZEND_VM_NEXT_OPCODE();
 	}
 
 	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == &EG(error_zval))) {
@@ -1303,6 +1352,59 @@ ZEND_VM_HANDLER(34, ZEND_PRE_INC, VAR|CV, ANY)
 	SEPARATE_ZVAL_NOREF(var_ptr);
 
 	increment_function(var_ptr);
+
+	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
+	}
+
+	FREE_OP1_VAR_PTR();
+	CHECK_EXCEPTION();
+	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(34, ZEND_PRE_INC, VAR|CV, ANY)
+{
+	zend_free_op free_op1;
+	zval *var_ptr;
+
+	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
+
+	if ((OP1_TYPE != IS_VAR || EXPECTED(var_ptr != NULL)) && EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
+		fast_long_increment_function(var_ptr);
+		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+			ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
+		}
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_PRE_INC_helper, type, var_ptr, free_op1);
+}
+
+ZEND_VM_HELPER_EX(ZEND_PRE_DEC_helper, VAR|CV, ANY, zval *var_ptr, zend_free_op free_op1)
+{
+	USE_OPLINE
+
+	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == NULL)) {
+		SAVE_OPLINE();
+		zend_error(E_EXCEPTION | E_ERROR, "Cannot increment/decrement overloaded objects nor string offsets");
+		HANDLE_EXCEPTION();
+	}
+
+	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == &EG(error_zval))) {
+		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
+			ZVAL_NULL(EX_VAR(opline->result.var));
+		}
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	SAVE_OPLINE();
+	if (OP1_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(var_ptr) == IS_UNDEF)) {
+		var_ptr = GET_OP1_UNDEF_CV(var_ptr, BP_VAR_RW);
+	}
+	ZVAL_DEREF(var_ptr);
+	SEPARATE_ZVAL_NOREF(var_ptr);
+
+	decrement_function(var_ptr);
 
 	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
 		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
@@ -1315,19 +1417,12 @@ ZEND_VM_HANDLER(34, ZEND_PRE_INC, VAR|CV, ANY)
 
 ZEND_VM_HANDLER(35, ZEND_PRE_DEC, VAR|CV, ANY)
 {
-	USE_OPLINE
 	zend_free_op free_op1;
 	zval *var_ptr;
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 
-	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == NULL)) {
-		SAVE_OPLINE();
-		zend_error(E_EXCEPTION | E_ERROR, "Cannot increment/decrement overloaded objects nor string offsets");
-		HANDLE_EXCEPTION();
-	}
-
-	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
+	if ((OP1_TYPE != IS_VAR || EXPECTED(var_ptr != NULL)) && EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
 		fast_long_decrement_function(var_ptr);
 		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
 			ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
@@ -1335,49 +1430,17 @@ ZEND_VM_HANDLER(35, ZEND_PRE_DEC, VAR|CV, ANY)
 		ZEND_VM_NEXT_OPCODE();
 	}
 
-	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == &EG(error_zval))) {
-		if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
-			ZVAL_NULL(EX_VAR(opline->result.var));
-		}
-		ZEND_VM_NEXT_OPCODE();
-	}
-
-	SAVE_OPLINE();
-	if (OP1_TYPE == IS_CV && UNEXPECTED(Z_TYPE_P(var_ptr) == IS_UNDEF)) {
-		var_ptr = GET_OP1_UNDEF_CV(var_ptr, BP_VAR_RW);
-	}
-	ZVAL_DEREF(var_ptr);
-	SEPARATE_ZVAL_NOREF(var_ptr);
-
-	decrement_function(var_ptr);
-
-	if (UNEXPECTED(RETURN_VALUE_USED(opline))) {
-		ZVAL_COPY(EX_VAR(opline->result.var), var_ptr);
-	}
-
-	FREE_OP1_VAR_PTR();
-	CHECK_EXCEPTION();
-	ZEND_VM_NEXT_OPCODE();
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_PRE_DEC_helper, type, var_ptr, free_op1);
 }
 
-ZEND_VM_HANDLER(36, ZEND_POST_INC, VAR|CV, ANY)
+ZEND_VM_HELPER_EX(ZEND_POST_INC_helper, VAR|CV, ANY, zval *var_ptr, zend_free_op free_op1)
 {
 	USE_OPLINE
-	zend_free_op free_op1;
-	zval *var_ptr;
-
-	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 
 	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == NULL)) {
 		SAVE_OPLINE();
 		zend_error(E_EXCEPTION | E_ERROR, "Cannot increment/decrement overloaded objects nor string offsets");
 		HANDLE_EXCEPTION();
-	}
-
-	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
-		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
-		fast_long_increment_function(var_ptr);
-		ZEND_VM_NEXT_OPCODE();
 	}
 
 	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == &EG(error_zval))) {
@@ -1400,24 +1463,30 @@ ZEND_VM_HANDLER(36, ZEND_POST_INC, VAR|CV, ANY)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(37, ZEND_POST_DEC, VAR|CV, ANY)
+ZEND_VM_HANDLER(36, ZEND_POST_INC, VAR|CV, ANY)
 {
-	USE_OPLINE
 	zend_free_op free_op1;
 	zval *var_ptr;
 
 	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
 
+	if ((OP1_TYPE != IS_VAR || EXPECTED(var_ptr != NULL)) && EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
+		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
+		fast_long_increment_function(var_ptr);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_POST_INC_helper, type, var_ptr, free_op1);
+}
+
+ZEND_VM_HELPER_EX(ZEND_POST_DEC_helper, VAR|CV, ANY, zval *var_ptr, zend_free_op free_op1)
+{
+	USE_OPLINE
+
 	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == NULL)) {
 		SAVE_OPLINE();
 		zend_error(E_EXCEPTION | E_ERROR, "Cannot increment/decrement overloaded objects nor string offsets");
 		HANDLE_EXCEPTION();
-	}
-
-	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
-		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
-		fast_long_decrement_function(var_ptr);
-		ZEND_VM_NEXT_OPCODE();
 	}
 
 	if (OP1_TYPE == IS_VAR && UNEXPECTED(var_ptr == &EG(error_zval))) {
@@ -1438,6 +1507,21 @@ ZEND_VM_HANDLER(37, ZEND_POST_DEC, VAR|CV, ANY)
 	FREE_OP1_VAR_PTR();
 	CHECK_EXCEPTION();
 	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(37, ZEND_POST_DEC, VAR|CV, ANY)
+{
+	zend_free_op free_op1;
+	zval *var_ptr;
+
+	var_ptr = GET_OP1_ZVAL_PTR_PTR_UNDEF(BP_VAR_RW);
+	if ((OP1_TYPE != IS_VAR || EXPECTED(var_ptr != NULL)) && EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
+		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
+		fast_long_decrement_function(var_ptr);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_POST_DEC_helper, type, var_ptr, free_op1);
 }
 
 ZEND_VM_HANDLER(40, ZEND_ECHO, CONST|TMPVAR|CV, ANY)
