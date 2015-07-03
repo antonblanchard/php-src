@@ -15045,24 +15045,14 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_PRE_DEC_SPEC_VAR_HANDLER(ZEND_
 	ZEND_VM_TAIL_CALL(ZEND_PRE_DEC_helper_SPEC_VAR(var_ptr, free_op1 ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_CC));
 }
 
-static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_INC_SPEC_VAR_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_never_inline ZEND_POST_INC_helper_SPEC_VAR(zval *var_ptr, zend_free_op free_op1 ZEND_OPCODE_HANDLER_ARGS_DC)
 {
 	USE_OPLINE
-	zend_free_op free_op1;
-	zval *var_ptr;
-
-	var_ptr = _get_zval_ptr_ptr_var(opline->op1.var, execute_data, &free_op1);
 
 	if (IS_VAR == IS_VAR && UNEXPECTED(var_ptr == NULL)) {
 		SAVE_OPLINE();
 		zend_error(E_EXCEPTION | E_ERROR, "Cannot increment/decrement overloaded objects nor string offsets");
 		HANDLE_EXCEPTION();
-	}
-
-	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
-		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
-		fast_long_increment_function(var_ptr);
-		ZEND_VM_NEXT_OPCODE();
 	}
 
 	if (IS_VAR == IS_VAR && UNEXPECTED(var_ptr == &EG(error_zval))) {
@@ -15083,6 +15073,22 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_INC_SPEC_VAR_HANDLER(ZEND
 	if (free_op1) {zval_ptr_dtor_nogc(free_op1);};
 	CHECK_EXCEPTION();
 	ZEND_VM_NEXT_OPCODE();
+}
+
+static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_INC_SPEC_VAR_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+{
+	zend_free_op free_op1;
+	zval *var_ptr;
+
+	var_ptr = _get_zval_ptr_ptr_var(opline->op1.var, execute_data, &free_op1);
+
+	if ((IS_VAR != IS_VAR || EXPECTED(var_ptr != NULL)) && EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
+		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
+		fast_long_increment_function(var_ptr);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_TAIL_CALL(ZEND_POST_INC_helper_SPEC_VAR(var_ptr, free_op1 ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_CC));
 }
 
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_DEC_SPEC_VAR_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
@@ -28406,24 +28412,14 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_PRE_DEC_SPEC_CV_HANDLER(ZEND_O
 	ZEND_VM_TAIL_CALL(ZEND_PRE_DEC_helper_SPEC_CV(var_ptr, free_op1 ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_CC));
 }
 
-static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_INC_SPEC_CV_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL zend_never_inline ZEND_POST_INC_helper_SPEC_CV(zval *var_ptr, zend_free_op free_op1 ZEND_OPCODE_HANDLER_ARGS_DC)
 {
 	USE_OPLINE
-
-	zval *var_ptr;
-
-	var_ptr = _get_zval_ptr_cv_undef_BP_VAR_RW(execute_data, opline->op1.var);
 
 	if (IS_CV == IS_VAR && UNEXPECTED(var_ptr == NULL)) {
 		SAVE_OPLINE();
 		zend_error(E_EXCEPTION | E_ERROR, "Cannot increment/decrement overloaded objects nor string offsets");
 		HANDLE_EXCEPTION();
-	}
-
-	if (EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
-		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
-		fast_long_increment_function(var_ptr);
-		ZEND_VM_NEXT_OPCODE();
 	}
 
 	if (IS_CV == IS_VAR && UNEXPECTED(var_ptr == &EG(error_zval))) {
@@ -28443,6 +28439,22 @@ static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_INC_SPEC_CV_HANDLER(ZEND_
 
 	CHECK_EXCEPTION();
 	ZEND_VM_NEXT_OPCODE();
+}
+
+static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_INC_SPEC_CV_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
+{
+	zend_free_op free_op1;
+	zval *var_ptr;
+
+	var_ptr = _get_zval_ptr_cv_undef_BP_VAR_RW(execute_data, opline->op1.var);
+
+	if ((IS_CV != IS_VAR || EXPECTED(var_ptr != NULL)) && EXPECTED(Z_TYPE_P(var_ptr) == IS_LONG)) {
+		ZVAL_COPY_VALUE(EX_VAR(opline->result.var), var_ptr);
+		fast_long_increment_function(var_ptr);
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_TAIL_CALL(ZEND_POST_INC_helper_SPEC_CV(var_ptr, free_op1 ZEND_OPCODE_HANDLER_ARGS_PASSTHRU_CC));
 }
 
 static ZEND_OPCODE_HANDLER_RET ZEND_FASTCALL ZEND_POST_DEC_SPEC_CV_HANDLER(ZEND_OPCODE_HANDLER_ARGS)
