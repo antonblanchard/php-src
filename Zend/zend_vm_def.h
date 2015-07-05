@@ -4920,21 +4920,14 @@ ZEND_VM_HANDLER(164, ZEND_RECV_VARIADIC, ANY, ANY)
 	ZEND_VM_NEXT_OPCODE();
 }
 
-ZEND_VM_HANDLER(52, ZEND_BOOL, CONST|TMPVAR|CV, ANY)
+ZEND_VM_HELPER_EX(ZEND_BOOL_helper, CONST|TMPVAR|CV, ANY, zval *val, zend_free_op free_op1)
 {
 	USE_OPLINE
-	zval *val;
-	zend_free_op free_op1;
 
-	val = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
-	if (Z_TYPE_INFO_P(val) == IS_TRUE) {
-		ZVAL_TRUE(EX_VAR(opline->result.var));
-	} else if (EXPECTED(Z_TYPE_INFO_P(val) <= IS_TRUE)) {
-		if (UNEXPECTED(Z_TYPE_INFO_P(val) == IS_UNDEF)) {
-			SAVE_OPLINE();
-			GET_OP1_UNDEF_CV(val, BP_VAR_R);
-			CHECK_EXCEPTION();
-		}
+	if (Z_TYPE_INFO_P(val) == IS_UNDEF) {
+		SAVE_OPLINE();
+		GET_OP1_UNDEF_CV(val, BP_VAR_R);
+		CHECK_EXCEPTION();
 		ZVAL_FALSE(EX_VAR(opline->result.var));
 	} else {
 		SAVE_OPLINE();
@@ -4943,6 +4936,23 @@ ZEND_VM_HANDLER(52, ZEND_BOOL, CONST|TMPVAR|CV, ANY)
 		CHECK_EXCEPTION();
 	}
 	ZEND_VM_NEXT_OPCODE();
+}
+
+ZEND_VM_HANDLER(52, ZEND_BOOL, CONST|TMPVAR|CV, ANY)
+{
+	zval *val;
+	zend_free_op free_op1;
+
+	val = GET_OP1_ZVAL_PTR_UNDEF(BP_VAR_R);
+	if (Z_TYPE_INFO_P(val) == IS_TRUE) {
+		ZVAL_TRUE(EX_VAR(opline->result.var));
+		ZEND_VM_NEXT_OPCODE();
+	} else if (EXPECTED(Z_TYPE_INFO_P(val) == IS_FALSE) || EXPECTED(Z_TYPE_INFO_P(val) == IS_NULL)) {
+		ZVAL_FALSE(EX_VAR(opline->result.var));
+		ZEND_VM_NEXT_OPCODE();
+	}
+
+	ZEND_VM_DISPATCH_TO_HELPER_EX(ZEND_BOOL_helper, type, val, free_op1);
 }
 
 ZEND_VM_HANDLER(100, ZEND_GOTO, ANY, CONST)
