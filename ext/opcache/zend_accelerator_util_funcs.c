@@ -24,6 +24,7 @@
 #include "zend_accelerator_util_funcs.h"
 #include "zend_persist.h"
 #include "zend_shared_alloc.h"
+#include "ZendAccelerator.h"
 
 #if SIZEOF_SIZE_T <= SIZEOF_ZEND_LONG
 /* If sizeof(void*) == sizeof(ulong) we can use zend_hash index functions */
@@ -646,7 +647,7 @@ failure:
 	zend_error(E_ERROR, "Cannot declare %s %s, because the name is already in use", zend_get_object_type(ce1), ZSTR_VAL(ce1->name));
 }
 
-#ifdef __SSE2__
+#if defined(__SSE2__) && defined(FAST_MEMCPY)
 #include <mmintrin.h>
 #include <emmintrin.h>
 
@@ -687,7 +688,7 @@ zend_op_array* zend_accel_load_script(zend_persistent_script *persistent_script,
 		ZCG(current_persistent_script) = persistent_script;
 		ZCG(arena_mem) = NULL;
 		if (EXPECTED(persistent_script->arena_size)) {
-#ifdef __SSE2__
+#ifdef FAST_MEMCPY
 			/* Target address must be aligned to 64-byte boundary */
 			ZCG(arena_mem) = zend_arena_alloc(&CG(arena), persistent_script->arena_size + 64);
 			ZCG(arena_mem) = (void*)(((zend_uintptr_t)ZCG(arena_mem) + 63L) & ~63L);

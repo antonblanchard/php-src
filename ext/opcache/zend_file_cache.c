@@ -738,7 +738,7 @@ int zend_file_cache_script_store(zend_persistent_script *script, int in_shm)
 		return FAILURE;
 	}
 
-#ifdef __SSE2__
+#ifdef FAST_MEMCPY
 	/* Align to 64-byte boundary */
 	mem = emalloc(script->size + 64);
 	buf = (void*)(((zend_uintptr_t)mem + 63L) & ~63L);
@@ -1264,7 +1264,7 @@ zend_persistent_script *zend_file_cache_script_load(zend_file_handle *file_handl
 	}
 
 	checkpoint = zend_arena_checkpoint(CG(arena));
-#ifdef __SSE2__
+#ifdef FAST_MEMCPY
 	/* Align to 64-byte boundary */
 	mem = zend_arena_alloc(&CG(arena), info.mem_size + info.str_size + 64);
 	mem = (void*)(((zend_uintptr_t)mem + 63L) & ~63L);
@@ -1322,7 +1322,7 @@ zend_persistent_script *zend_file_cache_script_load(zend_file_handle *file_handl
 			goto use_process_mem;
 		}
 
-#ifdef __SSE2__
+#ifdef FAST_MEMCPY
 		/* Align to 64-byte boundary */
 		buf = zend_shared_alloc(info.mem_size + 64);
 		buf = (void*)(((zend_uintptr_t)buf + 63L) & ~63L);

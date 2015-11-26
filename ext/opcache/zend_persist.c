@@ -908,7 +908,7 @@ zend_persistent_script *zend_accel_script_persist(zend_persistent_script *script
 	}
 	zend_accel_store_string(script->script.filename);
 
-#ifdef __SSE2__
+#ifdef FAST_MEMCPY
 	/* Align to 64-byte boundary */
 	ZCG(mem) = (void*)(((zend_uintptr_t)ZCG(mem) + 63L) & ~63L);
 #else

@@ -393,7 +393,7 @@ uint zend_accel_script_persist_calc(zend_persistent_script *new_persistent_scrip
 	}
 	ADD_STRING(new_persistent_script->script.filename);
 
-#ifdef __SSE2__
+#ifdef FAST_MEMCPY
 	/* Align size to 64-byte boundary */
 	new_persistent_script->size = (new_persistent_script->size + 63) & ~63;
 #endif
@@ -402,7 +402,7 @@ uint zend_accel_script_persist_calc(zend_persistent_script *new_persistent_scrip
 	zend_hash_persist_calc(&new_persistent_script->script.function_table, zend_persist_op_array_calc);
 	zend_persist_op_array_calc_ex(&new_persistent_script->script.main_op_array);
 
-#ifdef __SSE2__
+#ifdef FAST_MEMCPY
 	/* Align size to 64-byte boundary */
 	new_persistent_script->arena_size = (new_persistent_script->arena_size + 63) & ~63;
 #endif

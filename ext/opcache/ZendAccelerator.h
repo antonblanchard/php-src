@@ -313,4 +313,10 @@ zend_op_array *persistent_compile_file(zend_file_handle *file_handle, int type);
 
 zend_string *accel_new_interned_string(zend_string *str);
 
+#ifdef __SSE2__
+#define FAST_MEMCPY
+#elif defined(__powerpc64__) && defined(__LITTLE_ENDIAN__)
+#define FAST_MEMCPY
+#endif
+
 #endif /* ZEND_ACCELERATOR_H */
