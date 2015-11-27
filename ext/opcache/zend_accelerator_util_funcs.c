@@ -675,6 +675,34 @@ static zend_always_inline void fast_memcpy(void *dest, const void *src, size_t s
 }
 #endif
 
+#if defined(__powerpc64__) && defined(__LITTLE_ENDIAN__) && defined(FAST_MEMCPY)
+#include <altivec.h>
+
+void fast_memcpy(void *dest, void *src, unsigned long size)
+{
+	__vector char *dqdest = dest;
+	const __vector char *dqsrc = src;
+	const __vector char *end = (const __vector char *)((const char *)src + size);
+
+	do {
+		/* Might want to add some prefetch here */
+		__vector char v1 = vec_ld(0, dqsrc);
+		__vector char v2 = vec_ld(16, dqsrc);
+		__vector char v3 = vec_ld(32, dqsrc);
+		__vector char v4 = vec_ld(48, dqsrc);
+
+		dqsrc += 4;
+
+		vec_st(v1, 0, dqdest);
+		vec_st(v2, 16, dqdest);
+		vec_st(v3, 32, dqdest);
+		vec_st(v4, 48, dqdest);
+
+		dqdest += 4;
+	} while (dqsrc != end);
+}
+#endif
+
 zend_op_array* zend_accel_load_script(zend_persistent_script *persistent_script, int from_shared_memory)
 {
 	zend_op_array *op_array;
