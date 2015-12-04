@@ -21,8 +21,7 @@
 #define _GNU_SOURCE
 #include "php.h"
 #include "ext/standard/base64.h"
-
-PHPAPI int php_url_decode(char *str, int len);
+#include "ext/standard/url.h"
 
 /* Memory streams use a dynamic memory buffer to emulate a stream.
  * You can use php_stream_memory_open to create a readonly stream
